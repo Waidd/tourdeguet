@@ -4,10 +4,14 @@ const Events = require('events');
 const Feed = require('./feed');
 const feedsURL = require('../feeds.json');
 
+const FETCH_INTERVAL = 600000;
+
 class Feeds extends Events {
   constructor () {
     super();
     this._initializeFeeds();
+    this.enabled = false;
+    this.nextLoad = null;
   }
 
   _initializeFeeds () {
@@ -15,27 +19,42 @@ class Feeds extends Events {
 
     Object.keys(feedsURL).forEach((feedName) => {
       let feed = new Feed(feedName, feedsURL[feedName]);
-
-      feed.on('meta', (meta) => this.emit('meta', feedName, meta));
-      feed.on('error', (err) => this.emit('error', feedName, err));
-      feed.on('fetch', (meta) => this.emit('fetch', feedName, meta));
-      feed.on('fetched', (items) => this.emit('fetched', feedName, items));
-      feed.on('item', (item) => this.emit('item', feedName, item));
-
       this.feeds.push(feed);
     });
   }
 
-  load () {
-    this.feeds.forEach((feed) => feed.load());
+  async load () {
+    this.nextLoad = null;
+
+    for (let i = 0; i < this.feeds.length; i++) {
+      const feed = this.feeds[i];
+      this.emit('fetch', feed.name);
+
+      const items = await feed.load();
+      if (items && items.length) {
+        this.emit('fetched', feed.name, items);
+      }
+    }
+
+    if (!this.enabled) { return; }
+    this.nextLoad = setTimeout(this.load.bind(this), FETCH_INTERVAL);
   }
 
   start () {
-    this.feeds.forEach((feed) => feed.start());
+    if (this.enabled) { return; }
+
+    this.enabled = true;
+    this.load();
   }
 
   stop () {
-    this.feeds.forEach((feed) => feed.stop());
+    if (!this.enabled) { return; }
+
+    this.enabled = false;
+    if (this.nextLoad) {
+      clearTimeout(this.nextLoad);
+      this.nextLoad = null;
+    }
   }
 
   get items () {

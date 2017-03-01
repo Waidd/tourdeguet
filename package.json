@@ -1,18 +1,20 @@
 {
   "name": "tourdeguet",
   "description": "Rss feeds aggregator.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Thomas Cholley <cholley.t@gmail.com>",
   "main": "src/app.js",
   "scripts": {
     "configure": "cp feeds.json.example feeds.json && $EDITOR feeds.json",
-    "start": "./bin/tourdeguet.js",
+    "start": "mkdir -p images && ./bin/tourdeguet.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "license": "ISC",
   "dependencies": {
+    "express": "^4.14.1",
     "feedparser": "^2.1.0",
-    "request": "^2.79.0",
+    "node-fetch": "^1.6.3",
+    "sharp": "^0.17.2",
     "ws": "^2.0.3"
   }
 }

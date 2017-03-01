@@ -1,15 +1,19 @@
 'use strict';
 
+const express = require('express');
+const path = require('path');
 const WebSocket = require('ws');
 const Feeds = require('./feeds');
 
 class App {
-  constructor () {
-    this.feeds = new Feeds();
+  start () {
+    this._startHTTPServer();
+    this._startWebsocketSever();
+    this._startFeeds();
   }
 
-  start () {
-    this.feeds.on('error', (name, err) => console.error(name, err));
+  _startFeeds () {
+    this.feeds = new Feeds();
     this.feeds.on('fetch', (name) => console.log('fetch', name));
     this.feeds.on('fetched', (name, items) => {
       console.log('fetched', name, items.length);
@@ -23,9 +27,20 @@ class App {
     });
 
     this.feeds.start();
+  }
 
+  _startHTTPServer () {
+    this.app = express();
+
+    this.app.use(express.static(path.join(__dirname, '../images')));
+    this.app.listen(8081, function () {
+      console.log('Listening http on port 8081');
+    });
+  }
+
+  _startWebsocketSever () {
     this.server = new WebSocket.Server({port: 8080});
-    console.log('listen on port 8080');
+    console.log('Listening websockets on port 8080');
     this.server.on('connection', this._onClientConnection.bind(this));
   }
 

@@ -14,3 +14,4 @@ node_modules/
 
 # Configuration files
 feeds.json
+configuration.json
