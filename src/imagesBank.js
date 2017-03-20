@@ -41,6 +41,7 @@ class ImagesBank {
   }
 
   download (url, guid) {
+    url = encodeURI(url);
     let filename = crypto.createHash('md5').update(guid).digest('hex') + '.png';
     let filepath = path.resolve(IMAGES_DIRECTORY, filename);
 
@@ -57,7 +58,7 @@ class ImagesBank {
 
       fetch(url)
       .then((res) => {
-        if (res.status !== 200) { throw new Error('could not load image'); }
+        if (res.status !== 200) { throw new Error(`could not load image. Status ${res.status} on ${url}`); }
         return res.body;
       }).then((stream) => {
         stream

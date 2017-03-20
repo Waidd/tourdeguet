@@ -4,7 +4,8 @@ const Events = require('events');
 const Feed = require('./feed');
 const feedsURL = require('../feeds.json');
 
-const FETCH_INTERVAL = 600000;
+// @TODO we should have a faster / longer fetching interval if a client is connected or not
+const FETCH_INTERVAL = 10 * 60 * 1000;
 
 class Feeds extends Events {
   constructor () {
@@ -27,16 +28,24 @@ class Feeds extends Events {
     this.nextLoad = null;
 
     for (let i = 0; i < this.feeds.length; i++) {
-      const feed = this.feeds[i];
-      this.emit('fetch', feed.name);
+      try {
+        const feed = this.feeds[i];
+        this.emit('fetch', feed.name);
 
-      const items = await feed.load();
-      if (items && items.length) {
-        this.emit('fetched', feed.name, items);
+        const items = await feed.load();
+        if (items && items.length) {
+          this.emit('fetched', feed.name, items);
+        }
+      } catch (error) {
+        console.error(`error while loading ${this.feeds[i].name}`, error);
       }
     }
 
-    if (!this.enabled) { return; }
+    if (!this.enabled) {
+      console.log('Terminate loading without programming a next load.');
+      return;
+    }
+    console.log('Program a next load.');
     this.nextLoad = setTimeout(this.load.bind(this), FETCH_INTERVAL);
   }
 
