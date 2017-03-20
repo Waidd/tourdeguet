@@ -27,7 +27,7 @@ class App {
   _startHTTPServer () {
     this.app = express();
 
-    this.app.use(express.static(path.join(__dirname, '../images')));
+    this.app.use('/images', express.static(path.join(__dirname, '../images')));
 
     this.clients = [];
     this.app.get('/stream/items', (req, res) => {

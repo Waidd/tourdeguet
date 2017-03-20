@@ -66,7 +66,7 @@ class ImagesBank {
         .pipe(fs.createWriteStream(filepath))
         .on('finish', () => {
           this.bank[guid] = filepath;
-          resolve(`${configuration.url}/${filename}`);
+          resolve(`${configuration.url}/images/${filename}`);
         })
         .on('error', (err) => {
           console.log('could not treat image', url, err);
