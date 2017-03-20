@@ -2,13 +2,11 @@
 
 const express = require('express');
 const path = require('path');
-const WebSocket = require('ws');
 const Feeds = require('./feeds');
 
 class App {
   start () {
     this._startHTTPServer();
-    this._startWebsocketSever();
     this._startFeeds();
   }
 
@@ -17,12 +15,9 @@ class App {
     this.feeds.on('fetch', (name) => console.log('fetch', name));
     this.feeds.on('fetched', (name, items) => {
       console.log('fetched', name, items.length);
-      this.server.clients.forEach((client) => {
-        if (client.readyState !== WebSocket.OPEN) { return; }
-        client.send(JSON.stringify({
-          type: 'update',
-          items: items
-        }));
+
+      this.clients.forEach((client) => {
+        client.write(`data: ${JSON.stringify(items)}\n\n`);
       });
     });
 
@@ -33,43 +28,31 @@ class App {
     this.app = express();
 
     this.app.use(express.static(path.join(__dirname, '../images')));
+
+    this.clients = [];
+    this.app.get('/stream/items', (req, res) => {
+      res.writeHead(200, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept',
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive'
+      });
+      res.write(`data: ${JSON.stringify(this.feeds.items)}\n\n`);
+
+      this.clients.push(res);
+      const _popClient = () => {
+        let index = this.clients.indexOf(res);
+        if (!~index) { return; }
+        this.clients.splice(index, 1);
+      };
+      req.on('close', _popClient);
+      req.on('end', _popClient);
+    });
+
     this.app.listen(8081, function () {
       console.log('Listening http on port 8081');
     });
-  }
-
-  _startWebsocketSever () {
-    this.server = new WebSocket.Server({port: 8080});
-    console.log('Listening websockets on port 8080');
-    this.server.on('connection', this._onClientConnection.bind(this));
-  }
-
-  _onClientConnection (client) {
-    console.log('incomming connection');
-
-    client.on('message', this._onClientMessage.bind(this, client));
-
-    client.send(JSON.stringify({
-      type: 'entries',
-      items: this.feeds.items
-    }));
-  }
-
-  _onClientMessage (client, message) {
-    try {
-      message = JSON.parse(message);
-      this._handleClientMessage(client, message);
-    } catch (e) {
-      console.log('incoming message error', e);
-    }
-  }
-
-  _handleClientMessage (client, message) {
-    if (message.type === 'ping') {
-      client.send(JSON.stringify({
-        type: 'pong'
-      }));
-    }
   }
 }
 
