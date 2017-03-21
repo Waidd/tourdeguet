@@ -3,18 +3,25 @@
 const express = require('express');
 const path = require('path');
 const Feeds = require('./feeds');
+const logger = require('./logger');
 
 class App {
-  start () {
-    this._startHTTPServer();
-    this._startFeeds();
+  async start () {
+    try {
+      await this._startHTTPServer();
+      this._startFeeds();
+    } catch (e) {
+      logger.error('Error while starting.', e);
+    }
   }
 
   _startFeeds () {
     this.feeds = new Feeds();
-    this.feeds.on('fetch', (name) => console.log('fetch', name));
+    this.feeds.on('fetch', (name) => {
+      logger.verbose(`fetch ${name}.`);
+    });
     this.feeds.on('fetched', (name, items) => {
-      console.log('fetched', name, items.length);
+      logger.verbose(`fetched ${items.length} item(s) from ${name}.`);
 
       this.clients.forEach((client) => {
         client.write(`data: ${JSON.stringify(items)}\n\n`);
@@ -50,8 +57,11 @@ class App {
       req.on('end', _popClient);
     });
 
-    this.app.listen(8081, function () {
-      console.log('Listening http on port 8081');
+    return new Promise((resolve, reject) => {
+      this.app.listen(8081, function () {
+        logger.info('Listening on port 8081.');
+        resolve();
+      });
     });
   }
 }

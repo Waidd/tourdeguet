@@ -2,6 +2,7 @@ const fetch = require('node-fetch');
 const FeedParser = require('feedparser');
 const Item = require('./item');
 const GLOBALS = require('../globals');
+const logger = require('./logger');
 
 class Feed {
   constructor (name, url) {
@@ -24,7 +25,7 @@ class Feed {
       await Promise.all(this.parsingPromises);
       this._sort();
     } catch (e) {
-      console.error(e);
+      logger.error('Error while loading a feed.', e);
     }
 
     this.fetching = false;

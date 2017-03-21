@@ -7,6 +7,7 @@ const fetch = require('node-fetch');
 const sharp = require('sharp');
 const configuration = require('../configuration.json');
 const GLOBALS = require('../globals');
+const logger = require('./logger');
 
 class ImagesBank {
   constructor () {
@@ -30,12 +31,14 @@ class ImagesBank {
     let filepath = this.bank[guid];
 
     if (!filepath) {
-      console.warn(`File ${guid} not found.`);
+      logger.warn(`File ${guid} not found.`);
       return;
     }
 
     fs.unlink(filepath, (err) => {
-      if (err) { console.error(err); }
+      if (err) {
+        logger.error(`Error while deleting ${guid}.`, err);
+      }
     });
   }
 
@@ -51,7 +54,7 @@ class ImagesBank {
       return `${configuration.url}/images/${filename}`;
     })
     .catch((error) => {
-      console.error(`Error while downloading image ${url}.`, error);
+      logger.error(`Error while downloading image ${url}. Use default image instead.`, error);
       return null;
     });
   }
