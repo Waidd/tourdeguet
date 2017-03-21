@@ -35,7 +35,12 @@ class Item {
     let image = this._findImage(raw);
 
     if (image) {
-      image = await imagesBank.download(image, raw.guid);
+      try {
+        image = await imagesBank.get(image, raw.guid);
+      } catch (error) {
+        console.error('Error during image recuperation.', error);
+        image = null;
+      }
     }
 
     return {
