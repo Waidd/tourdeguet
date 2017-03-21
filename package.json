@@ -1,7 +1,7 @@
 {
   "name": "tourdeguet",
   "description": "Rss feeds aggregator.",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "author": "Thomas Cholley <cholley.t@gmail.com>",
   "main": "src/app.js",
   "scripts": {
