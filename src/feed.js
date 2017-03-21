@@ -1,8 +1,7 @@
 const fetch = require('node-fetch');
 const FeedParser = require('feedparser');
 const Item = require('./item');
-
-const MAX_ITEMS = 20;
+const GLOBALS = require('../globals');
 
 class Feed {
   constructor (name, url) {
@@ -51,7 +50,7 @@ class Feed {
   _sort () {
     if (!this.newItems.length) { return; }
 
-    this.items = this.items.sort((a, b) => a.date - b.date).slice(0, MAX_ITEMS);
+    this.items = this.items.sort((a, b) => a.date - b.date).slice(0, GLOBALS.MAX_STORED_ITEMS_BY_FEED);
     this.minimumDate = this.items[0].date;
   }
 

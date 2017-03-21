@@ -6,8 +6,7 @@ const crypto = require('crypto');
 const fetch = require('node-fetch');
 const sharp = require('sharp');
 const configuration = require('../configuration.json');
-
-const IMAGES_DIRECTORY = path.resolve(__dirname, '../images');
+const GLOBALS = require('../globals');
 
 class ImagesBank {
   constructor () {
@@ -16,11 +15,11 @@ class ImagesBank {
   }
 
   clear () {
-    fs.readdir(IMAGES_DIRECTORY, (err, files) => {
+    fs.readdir(GLOBALS.IMAGES_DIRECTORY, (err, files) => {
       if (err) { throw err; }
 
       for (const file of files) {
-        fs.unlink(path.join(IMAGES_DIRECTORY, file), err => {
+        fs.unlink(path.join(GLOBALS.IMAGES_DIRECTORY, file), err => {
           if (err) { throw err; }
         });
       }
@@ -43,7 +42,7 @@ class ImagesBank {
   get (url, guid) {
     url = encodeURI(url);
     let filename = crypto.createHash('md5').update(guid).digest('hex') + '.png';
-    let filepath = path.resolve(IMAGES_DIRECTORY, filename);
+    let filepath = path.resolve(GLOBALS.IMAGES_DIRECTORY, filename);
 
     return this._fetch(url)
     .then(this._sanitize.bind(this, filepath))

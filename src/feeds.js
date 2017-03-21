@@ -3,9 +3,7 @@
 const Events = require('events');
 const Feed = require('./feed');
 const feedsURL = require('../feeds.json');
-
-// @TODO we should have a faster / longer fetching interval if a client is connected or not
-const FETCH_INTERVAL = 10 * 60 * 1000;
+const GLOBALS = require('../globals');
 
 class Feeds extends Events {
   constructor () {
@@ -46,7 +44,7 @@ class Feeds extends Events {
       return;
     }
     console.log('Program a next load.');
-    this.nextLoad = setTimeout(this.load.bind(this), FETCH_INTERVAL);
+    this.nextLoad = setTimeout(this.load.bind(this), GLOBALS.FEED_FETCH_COOLDOWN);
   }
 
   start () {
