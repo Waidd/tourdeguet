@@ -8,5 +8,6 @@ module.exports = {
   IMAGES_FORMAT: /(\.jpe?g)|(\.png)/i,
   MAX_STORED_ITEMS_BY_FEED: 20,
   // @TODO we should have a faster / longer fetching interval if a client is connected or not
-  FEED_FETCH_COOLDOWN: 10 * 60 * 1000
+  FEED_FETCH_COOLDOWN: 10 * 60 * 1000,
+  FETCH_TIMEOUT: 20 * 1000
 };

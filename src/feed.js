@@ -78,7 +78,7 @@ class Feed {
   }
 
   _get () {
-    return fetch(this.url)
+    return fetch(this.url, { timeout: GLOBALS.FETCH_TIMEOUT })
     .then((res) => {
       if (res.status !== 200) { throw new Error('Bad status code'); }
       return res.body;

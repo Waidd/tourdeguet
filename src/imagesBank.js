@@ -60,7 +60,7 @@ class ImagesBank {
   }
 
   _fetch (url) {
-    return fetch(url)
+    return fetch(url, { timeout: GLOBALS.FETCH_TIMEOUT })
     .then((res) => {
       if (res.status !== 200) { throw new Error(`Could not load image. Status ${res.status} on ${url}.`); }
       return res.body;
