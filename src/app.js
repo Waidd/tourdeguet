@@ -4,6 +4,7 @@ const express = require('express');
 const path = require('path');
 const Feeds = require('./feeds');
 const logger = require('./logger');
+const GLOBALS = require('../globals');
 
 class App {
   async start () {
@@ -22,10 +23,7 @@ class App {
     });
     this.feeds.on('fetched', (name, items) => {
       logger.verbose(`fetched ${items.length} item(s) from ${name}.`);
-
-      this.clients.forEach((client) => {
-        client.write(`data: ${JSON.stringify(items)}\n\n`);
-      });
+      this.clients.forEach((client) => this._pushItems(client, items));
     });
 
     this.feeds.start();
@@ -45,7 +43,7 @@ class App {
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive'
       });
-      res.write(`data: ${JSON.stringify(this.feeds.items)}\n\n`);
+      this._pushItems(res, this.feeds.items);
 
       this.clients.push(res);
       const _popClient = () => {
@@ -63,6 +61,13 @@ class App {
         resolve();
       });
     });
+  }
+
+  _pushItems (client, items) {
+    for (let i = 0; i < items.length; i += GLOBALS.MAX_SENDED_ITEMS) {
+      const partial = items.slice(i, i + GLOBALS.MAX_SENDED_ITEMS);
+      client.write(`data: ${JSON.stringify(partial)}\n\n`);
+    }
   }
 }
 
