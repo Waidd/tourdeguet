@@ -1,8 +1,8 @@
 const fetch = require('node-fetch');
 const FeedParser = require('feedparser');
 const Item = require('./item');
-
-const MAX_ITEMS = 20;
+const GLOBALS = require('../globals');
+const logger = require('./logger');
 
 class Feed {
   constructor (name, url) {
@@ -25,7 +25,7 @@ class Feed {
       await Promise.all(this.parsingPromises);
       this._sort();
     } catch (e) {
-      console.error(e);
+      logger.error('Error while loading a feed.', e);
     }
 
     this.fetching = false;
@@ -51,7 +51,7 @@ class Feed {
   _sort () {
     if (!this.newItems.length) { return; }
 
-    this.items = this.items.sort((a, b) => a.date - b.date).slice(0, MAX_ITEMS);
+    this.items = this.items.sort((a, b) => a.date - b.date).slice(0, GLOBALS.MAX_STORED_ITEMS_BY_FEED);
     this.minimumDate = this.items[0].date;
   }
 
@@ -78,7 +78,7 @@ class Feed {
   }
 
   _get () {
-    return fetch(this.url)
+    return fetch(this.url, { timeout: GLOBALS.FETCH_TIMEOUT })
     .then((res) => {
       if (res.status !== 200) { throw new Error('Bad status code'); }
       return res.body;

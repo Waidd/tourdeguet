@@ -6,8 +6,8 @@ const crypto = require('crypto');
 const fetch = require('node-fetch');
 const sharp = require('sharp');
 const configuration = require('../configuration.json');
-
-const IMAGES_DIRECTORY = path.resolve(__dirname, '../images');
+const GLOBALS = require('../globals');
+const logger = require('./logger');
 
 class ImagesBank {
   constructor () {
@@ -16,11 +16,11 @@ class ImagesBank {
   }
 
   clear () {
-    fs.readdir(IMAGES_DIRECTORY, (err, files) => {
+    fs.readdir(GLOBALS.IMAGES_DIRECTORY, (err, files) => {
       if (err) { throw err; }
 
       for (const file of files) {
-        fs.unlink(path.join(IMAGES_DIRECTORY, file), err => {
+        fs.unlink(path.join(GLOBALS.IMAGES_DIRECTORY, file), err => {
           if (err) { throw err; }
         });
       }
@@ -31,51 +31,56 @@ class ImagesBank {
     let filepath = this.bank[guid];
 
     if (!filepath) {
-      console.warn(`File ${guid} not found.`);
+      logger.warn(`File ${guid} not found.`);
       return;
     }
 
     fs.unlink(filepath, (err) => {
-      if (err) { console.error(err); }
+      if (err) {
+        logger.error(`Error while deleting ${guid}.`, err);
+      }
     });
   }
 
-  download (url, guid) {
+  get (url, guid) {
+    url = encodeURI(url);
     let filename = crypto.createHash('md5').update(guid).digest('hex') + '.png';
-    let filepath = path.resolve(IMAGES_DIRECTORY, filename);
+    let filepath = path.resolve(GLOBALS.IMAGES_DIRECTORY, filename);
 
-    return new Promise((resolve) => {
+    return this._fetch(url)
+    .then(this._sanitize.bind(this, filepath))
+    .then(() => {
+      this.bank[guid] = filepath;
+      return `${configuration.url}/images/${filename}`;
+    })
+    .catch((error) => {
+      logger.error(`Error while downloading image ${url}. Use default image instead.`, error);
+      return null;
+    });
+  }
+
+  _fetch (url) {
+    return fetch(url, { timeout: GLOBALS.FETCH_TIMEOUT })
+    .then((res) => {
+      if (res.status !== 200) { throw new Error(`Could not load image. Status ${res.status} on ${url}.`); }
+      return res.body;
+    });
+  }
+
+  _sanitize (filepath, stream) {
+    return new Promise((resolve, reject) => {
       const resizer = sharp()
       .resize(832, 300)
       .min()
       .withoutEnlargement(true)
       .png()
-      .on('error', (err) => {
-        console.log('could not treat image', url, err);
-        resolve(null);
-      });
+      .on('error', reject);
 
-      fetch(url)
-      .then((res) => {
-        if (res.status !== 200) { throw new Error('could not load image'); }
-        return res.body;
-      }).then((stream) => {
-        stream
-        .pipe(resizer)
-        .pipe(fs.createWriteStream(filepath))
-        .on('finish', () => {
-          this.bank[guid] = filepath;
-          resolve(`${configuration.url}/${filename}`);
-        })
-        .on('error', (err) => {
-          console.log('could not treat image', url, err);
-          resolve(null);
-        });
-      })
-      .catch((error) => {
-        console.error(error);
-        resolve(null);
-      });
+      stream
+      .pipe(resizer)
+      .pipe(fs.createWriteStream(filepath))
+      .on('finish', resolve)
+      .on('error', reject);
     });
   }
 }

@@ -2,25 +2,23 @@
 
 const Url = require('url');
 const imagesBank = require('./imagesBank');
-
-const IMAGE_PATTERN = /<img[^>]+src="?([^"\s]+)"?[^>]*\/>/i;
-const IMAGE_FORMAT = /(\.jpe?g)|(\.png)/i;
+const GLOBALS = require('../globals');
 
 class Item {
   static _extractImage (html) {
     if (!html) { return null; }
-    let img = html.match(IMAGE_PATTERN);
+    let img = html.match(GLOBALS.IMAGES_PATTERN);
 
     if (!img || !img[1]) { return null; }
     img = img[1];
 
-    if (!img.match(IMAGE_FORMAT)) { return null; }
+    if (!img.match(GLOBALS.IMAGES_FORMAT)) { return null; }
 
     return img;
   }
 
   static _findImage (item) {
-    let img = item.enclosures.find((enclosure) => enclosure.url.match(IMAGE_FORMAT));
+    let img = item.enclosures.find((enclosure) => enclosure.url.match(GLOBALS.IMAGES_FORMAT));
     if (img) { return img.url; }
 
     return this._extractImage(item.description || item.summary);
@@ -35,7 +33,12 @@ class Item {
     let image = this._findImage(raw);
 
     if (image) {
-      image = await imagesBank.download(image, raw.guid);
+      try {
+        image = await imagesBank.get(image, raw.guid);
+      } catch (error) {
+        console.error('Error during image recuperation.', error);
+        image = null;
+      }
     }
 
     return {

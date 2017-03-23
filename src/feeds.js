@@ -3,8 +3,8 @@
 const Events = require('events');
 const Feed = require('./feed');
 const feedsURL = require('../feeds.json');
-
-const FETCH_INTERVAL = 600000;
+const GLOBALS = require('../globals');
+const logger = require('./logger');
 
 class Feeds extends Events {
   constructor () {
@@ -27,17 +27,25 @@ class Feeds extends Events {
     this.nextLoad = null;
 
     for (let i = 0; i < this.feeds.length; i++) {
-      const feed = this.feeds[i];
-      this.emit('fetch', feed.name);
+      try {
+        const feed = this.feeds[i];
+        this.emit('fetch', feed.name);
 
-      const items = await feed.load();
-      if (items && items.length) {
-        this.emit('fetched', feed.name, items);
+        const items = await feed.load();
+        if (items && items.length) {
+          this.emit('fetched', feed.name, items);
+        }
+      } catch (e) {
+        logger.error('Error while loading ${this.feeds[i].name].', e);
       }
     }
 
-    if (!this.enabled) { return; }
-    this.nextLoad = setTimeout(this.load.bind(this), FETCH_INTERVAL);
+    if (!this.enabled) {
+      logger.verbose('Done fetching feeds without programming a further one.');
+      return;
+    }
+    logger.verbose(`Done fetching feeds. Wait ${GLOBALS.FEED_FETCH_COOLDOWN} before reload.`);
+    this.nextLoad = setTimeout(this.load.bind(this), GLOBALS.FEED_FETCH_COOLDOWN);
   }
 
   start () {
