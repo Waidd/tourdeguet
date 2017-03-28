@@ -67,7 +67,7 @@ class Feeds extends Events {
 
   get items () {
     let items = this.feeds.reduce((items, feed) => items.concat(feed.items), []);
-    items = items.sort((a, b) => a.date - b.date);
+    items = items.sort((a, b) => b.date - a.date);
     return items;
   }
 }

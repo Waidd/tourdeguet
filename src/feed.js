@@ -51,7 +51,7 @@ class Feed {
   _sort () {
     if (!this.newItems.length) { return; }
 
-    this.items = this.items.sort((a, b) => a.date - b.date).slice(0, GLOBALS.MAX_STORED_ITEMS_BY_FEED);
+    this.items.sort((a, b) => b.date - a.date).slice(0, GLOBALS.MAX_STORED_ITEMS_BY_FEED);
     this.minimumDate = this.items[0].date;
   }
 
