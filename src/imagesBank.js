@@ -5,7 +5,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const fetch = require('node-fetch');
 const sharp = require('sharp');
-const configuration = require('../configuration.json');
+const configuration = require('../configuration');
 const GLOBALS = require('../globals');
 const logger = require('./logger');
 
