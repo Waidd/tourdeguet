@@ -1,0 +1,16 @@
+pipeline:
+  deploy:
+    image: docker
+    commands:
+      - apk add --no-cache python py2-pip
+      - pip install --no-cache-dir docker-compose==1.12.0
+      - echo "$$FEEDS" > ./feeds.json
+      - docker-compose -v
+      - docker build -t tourdeguet .
+      - docker-compose up -d
+    #when:
+    #  branch: master
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets: [ FEEDS, PUBLIC_PATH ]
+
