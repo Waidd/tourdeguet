@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  tourdeguet:
+    image: tourdeguet
+    container_name: tourdeguet
+    ports:
+      - 42011:8081
+    environment:
+      - PUBLIC_PATH=$PUBLIC_PATH
+
